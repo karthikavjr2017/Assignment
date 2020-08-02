@@ -23,7 +23,7 @@ public class InMemoryDbController implements InMemoryDBService {
         database = new HashMap<>();
     }
 
-    private final long timeToWaitForALock=100L;
+    private final long timeToWaitForALock=200L;
 
     /**
      *
@@ -35,20 +35,6 @@ public class InMemoryDbController implements InMemoryDBService {
         return "Up and running";
     }
 
-/*    @GetMapping(value = "/ping/{key}")
-    @ResponseBody
-    public String getting(@PathVariable("key") String key){
-        System.out.println("Entering key" + " "+key);
-        return database.containsKey(key) ? database.get(key) : null;
-    }
-
-    @RequestMapping(path = "/ping/{key}/{value}")
-    @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
-    public void inserting(@PathVariable("key") String key, @PathVariable("value") String value){
-        System.out.println("Entering key" + " "+key + "and value"+" "+value);
-        database.put(key, value);
-    }*/
 
     @RequestMapping(value = "/put/{key}/{value}")
     @ResponseStatus(HttpStatus.OK)
@@ -185,7 +171,7 @@ public class InMemoryDbController implements InMemoryDBService {
     @RequestMapping(value = "/rollbackTransaction/{transactionId}")
     @ResponseBody
     public void rollbackTransaction(@PathVariable("transactionId") String transactionId) throws Exception {
-        validateTransaction(transactionId);
+        checkTransaction(transactionId);
 
         Boolean lockAcquired = reentrantLock.tryLock(timeToWaitForALock, TimeUnit.MILLISECONDS);
 
@@ -202,7 +188,7 @@ public class InMemoryDbController implements InMemoryDBService {
     @RequestMapping(value = "/commitTransaction/{transactionId}")
     @ResponseBody
     public void commitTransaction(@PathVariable("transactionId") String transactionId) throws Exception {
-        validateTransaction(transactionId);
+        checkTransaction(transactionId);
 
         HashMap<String, String> map = transactions.get(transactionId);
 
