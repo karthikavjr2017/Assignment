@@ -1,6 +1,7 @@
 package com.logmein.assignment.controllers;
 
 import com.logmein.assignment.services.InMemoryDBService;
+import org.apache.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/")
 public class InMemoryDbController implements InMemoryDBService {
+
+    final Logger LOGGER = Logger.getLogger(InMemoryDbController.class);
 
     private ReentrantLock reentrantLock;
     private HashMap<String, String> database;
@@ -25,13 +28,10 @@ public class InMemoryDbController implements InMemoryDBService {
 
     private final long timeToWaitForALock=200L;
 
-    /**
-     *
-     * @return health check of the application
-     */
     @GetMapping(value = "/ping")
     @ResponseBody
     public String ping(){
+        LOGGER.info("Checking the health of the application");
         return "Up and running";
     }
 
@@ -40,9 +40,11 @@ public class InMemoryDbController implements InMemoryDBService {
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
     public void put(@PathVariable("key") String key, @PathVariable("value") String value) throws InterruptedException {
+
+        LOGGER.info("Attempting to have a lock to avoid dirty_read");
         Boolean lockAcquired = reentrantLock.tryLock(timeToWaitForALock, TimeUnit.MILLISECONDS);
         if (lockAcquired) {
-            System.out.println("Entering key" + " "+key +" "+"and value"+" "+value);
+            LOGGER.info("Entering key" + " "+key +" "+"and value"+" "+value);
             try {
                 database.put(key, value);
             } finally {
@@ -76,6 +78,7 @@ public class InMemoryDbController implements InMemoryDBService {
 
     //check if the transaction is valid or not
     private void checkTransaction(String transactionId) throws Exception {
+        LOGGER.info("Checking for a valid transaction");
         if (transactionId == null || transactionId == "")
             throw new IllegalArgumentException("Invalid transactionId");
 
@@ -87,7 +90,7 @@ public class InMemoryDbController implements InMemoryDBService {
     @GetMapping(value = "/get/{key}")
     @ResponseBody
     public String get(@PathVariable("key") String key){
-        System.out.println("Entering key" + " "+key);
+        LOGGER.info("fetching the key from the database" + " "+key);
         Boolean ifKeyPresent = database.containsKey(key);
         if(ifKeyPresent)
         return database.get(key);
@@ -114,6 +117,8 @@ public class InMemoryDbController implements InMemoryDBService {
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
     public void delete(@PathVariable("key") String key) throws InterruptedException {
+
+        LOGGER.info("deleting the key from the database" + " "+key);
         if (database.containsKey(key)) {
             Boolean lockAcquired = reentrantLock.tryLock(timeToWaitForALock, TimeUnit.MILLISECONDS);
             if (lockAcquired) {
@@ -154,6 +159,7 @@ public class InMemoryDbController implements InMemoryDBService {
     @ResponseBody
     public void createTransaction(@PathVariable("transactionId") String transactionId) throws Exception {
 
+        LOGGER.info("checking if there is an active transaction");
         if (transactions.containsKey(transactionId)) {
             throw new Exception("Transaction Id '%s' is already active");
         }

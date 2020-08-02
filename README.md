@@ -60,7 +60,7 @@ For request sequence with transactions:
     
     In Addition, the following have been implemented to maintain J2EE standards.
     
-    1. Externalized Logging.
+    1. Logging.
     2. Exception Handling.
     3. Unit tests for the Rest API operations.
     
