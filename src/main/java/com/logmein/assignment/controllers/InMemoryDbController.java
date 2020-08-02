@@ -70,7 +70,7 @@ public class InMemoryDbController implements InMemoryDBService {
     @ResponseBody
     public void put(@PathVariable("key") String key, @PathVariable("value") String value, @PathVariable("transactionId") String transactionId) throws Exception {
 
-        validateTransaction(transactionId);
+        checkTransaction(transactionId);
 
         HashMap<String, String> map = transactions.get(transactionId);
         if (map.containsKey(key)) {
@@ -89,7 +89,7 @@ public class InMemoryDbController implements InMemoryDBService {
     }
 
     //check if the transaction is valid or not
-    private void validateTransaction(String transactionId) throws Exception {
+    private void checkTransaction(String transactionId) throws Exception {
         if (transactionId == null || transactionId == "")
             throw new IllegalArgumentException("Invalid transactionId");
 
@@ -112,7 +112,7 @@ public class InMemoryDbController implements InMemoryDBService {
     @RequestMapping(value = "/get/{key}/{transactionId}")
     @ResponseBody
     public String get(@PathVariable("key") String key, @PathVariable("transactionId") String transactionId) throws Exception {
-        validateTransaction(transactionId);
+        checkTransaction(transactionId);
 
         HashMap<String, String> map = transactions.get(transactionId);
 
@@ -145,7 +145,7 @@ public class InMemoryDbController implements InMemoryDBService {
     @ResponseBody
     public void delete(@PathVariable("key") String key, @PathVariable("transactionId") String transactionId) throws Exception {
 
-        validateTransaction(transactionId);
+        checkTransaction(transactionId);
 
         HashMap<String, String> entry = transactions.get(transactionId);
 
@@ -169,7 +169,7 @@ public class InMemoryDbController implements InMemoryDBService {
     public void createTransaction(@PathVariable("transactionId") String transactionId) throws Exception {
 
         if (transactions.containsKey(transactionId)) {
-            throw new Exception("Transaction Id '%s' already exists");
+            throw new Exception("Transaction Id '%s' is already active");
         }
 
         Boolean lockAcquired = reentrantLock.tryLock(timeToWaitForALock, TimeUnit.MILLISECONDS);
@@ -212,7 +212,7 @@ public class InMemoryDbController implements InMemoryDBService {
                 for (String key : map.keySet()) {
                     if (database.containsKey(key)) {
                         transactions.remove(transactionId);
-                        throw new Exception(String.format("Key '%s' already exists", key));
+                        throw new Exception(String.format("Key '%s' already exists in the database", key));
                     }
                 }
 
@@ -222,7 +222,10 @@ public class InMemoryDbController implements InMemoryDBService {
 
                 transactions.remove(transactionId);
 
-            } finally {
+            } catch (Exception ex){
+            }
+
+            finally {
                 reentrantLock.unlock();
             }
         }
