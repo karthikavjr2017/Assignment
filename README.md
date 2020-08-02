@@ -1,3 +1,3 @@
 # Assignment 
 
-Implementing an in-memory database as a key vaue store
+Implementing an In-memory database as a key value store
